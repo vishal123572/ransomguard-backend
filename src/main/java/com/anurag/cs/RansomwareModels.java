@@ -23,7 +23,7 @@ public final class RansomwareModels {
             @NotBlank @Size(max = 10000) String instructions, @NotNull Domain.Severity priority,
             @NotNull Long assigneeId, Long relatedScanId, @FutureOrPresent LocalDate dueDate) {}
     public record TaskUpdate(@NotNull Long version, @NotNull Domain.PreventionTaskStatus status,
-            @Size(max = 10000) String completionNotes, Long assigneeId) {}
+            @Size(max = 10000) String completionNotes, Long assigneeId, @Size(min = 1, max = 200) String title) {}
     public record TaskView(Long id, String title, String instructions, String completionNotes, Domain.Severity priority,
             Domain.PreventionTaskStatus status, UserView assignedTo, UserView createdBy, Long relatedScanId,
             LocalDate dueDate, Instant createdAt, Instant updatedAt, Long version) {

@@ -102,7 +102,10 @@ public class RansomwareService {
     }
     public TaskView updateTask(Long id, TaskUpdate request, Principal principal) {
         PreventionTask task = task(id, principal); version(request.version(), task.version);
+        String title = request.title() == null ? null : request.title().strip();
+        if (title != null && title.isEmpty()) throw bad("Task title cannot be blank.");
         if (principal.role() != Role.ADMIN) {
+            if (title != null && !Objects.equals(title, task.title)) throw forbidden();
             if (request.assigneeId() != null && !Objects.equals(request.assigneeId(), task.assignedTo.id)) throw forbidden();
             if (task.status == PreventionTaskStatus.COMPLETED || (request.status() != task.status && !isAllowedEmployeeTransition(task.status, request.status())))
                 throw bad("Start the task, then submit your completion notes for review.");
@@ -110,6 +113,9 @@ public class RansomwareService {
         if ((request.status() == PreventionTaskStatus.IN_REVIEW || request.status() == PreventionTaskStatus.COMPLETED)
                 && (request.completionNotes() == null || request.completionNotes().isBlank())) throw bad("Add completion notes before submitting for review or completing a task.");
         List<String> changes = new ArrayList<>();
+        if (principal.role() == Role.ADMIN && title != null && !Objects.equals(title, task.title)) {
+            task.title = title; changes.add("Updated task title");
+        }
         if (principal.role() == Role.ADMIN && request.assigneeId() != null && !Objects.equals(task.assignedTo.id, request.assigneeId())) {
             task.assignedTo = activeEmployee(request.assigneeId()); changes.add("Assigned to " + task.assignedTo.name);
         }
@@ -121,6 +127,22 @@ public class RansomwareService {
     private boolean isAllowedEmployeeTransition(PreventionTaskStatus from, PreventionTaskStatus to) {
         return (from == PreventionTaskStatus.TODO && to == PreventionTaskStatus.IN_PROGRESS)
             || (from == PreventionTaskStatus.IN_PROGRESS && to == PreventionTaskStatus.IN_REVIEW);
+    }
+    public void deleteTask(Long id, Principal principal) {
+        admin(principal); PreventionTask task = task(id, principal);
+        events.deleteByKindAndWorkId("task", id);
+        tasks.delete(task); tasks.flush();
+    }
+    public void deleteScan(Long id, Principal principal) {
+        admin(principal); FileScan scan = scan(id, principal);
+        List<PreventionTask> linkedTasks = tasks.findByRelatedScanId(id);
+        for (PreventionTask task : linkedTasks) {
+            task.relatedScan = null; task.updatedAt = Instant.now();
+            event("task", task.id, principal, "Removed the link to deleted file check SCAN-" + id + ".");
+        }
+        tasks.saveAllAndFlush(linkedTasks);
+        events.deleteByKindAndWorkId("scan", id);
+        scans.delete(scan); scans.flush();
     }
     @Transactional(readOnly = true) public List<EventView> events(String kind, Long id, Principal principal) {
         if (kind.equals("scan")) scan(id, principal); else if (kind.equals("task")) task(id, principal); else throw bad("Unknown activity type.");

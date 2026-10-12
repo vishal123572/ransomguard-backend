@@ -28,7 +28,7 @@ public class SecurityConfig {
     @Bean CorsConfigurationSource cors(@Value("${app.cors-origins}") String origins) {
         CorsConfiguration c=new CorsConfiguration();
         c.setAllowedOrigins(Arrays.stream(origins.split(",")).map(String::trim).filter(s->!s.isEmpty()).toList());
-        c.setAllowedMethods(List.of("GET","POST","PATCH","OPTIONS"));
+        c.setAllowedMethods(List.of("GET","POST","PATCH","DELETE","OPTIONS"));
         c.setAllowedHeaders(List.of("Authorization","Content-Type"));c.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source=new UrlBasedCorsConfigurationSource();source.registerCorsConfiguration("/**",c);return source;
     }

@@ -6,4 +6,5 @@ import java.util.List;
 public interface PreventionTaskRepository extends JpaRepository<PreventionTask, Long> {
     List<PreventionTask> findAllByOrderByUpdatedAtDesc();
     List<PreventionTask> findByAssignedToIdOrderByUpdatedAtDesc(Long userId);
+    List<PreventionTask> findByRelatedScanId(Long scanId);
 }

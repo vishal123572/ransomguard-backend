@@ -20,7 +20,7 @@ public final class ApiModels {
         public static TaskView of(AssessmentTask t) { return new TaskView(t.id,t.title,t.asset,t.priority,t.status,t.description,t.result,UserView.of(t.assignee),UserView.of(t.createdBy),t.vulnerability==null?null:t.vulnerability.id,t.dueDate,t.createdAt,t.updatedAt,t.version); }
     }
     public record Note(@NotBlank @Size(max=3500) String message) {}
-    public record UserStatus(@NotNull Boolean active) {}
+    public record UserUpdate(Boolean active, @Size(min=1,max=100) String name, @Email @Size(min=1,max=180) String email) {}
     public record EventView(Long id,String message,UserView actor,Instant createdAt) {
         public static EventView of(WorkEvent e) { return new EventView(e.id,e.message,UserView.of(e.actor),e.createdAt); }
     }
